@@ -15,15 +15,13 @@ export function d2_vrgb_str(v: vec3_t): string {
 }
 
 export function d2_clear_color_rgb(r: number, g: number, b: number): void {
-    d2.rect(0, 0, d2.canvas.width, d2.canvas.height);
     d2.fillStyle = d2_rgb_str(r, g, b);
-    d2.fill();
+    d2.fillRect(0, 0, d2.canvas.width, d2.canvas.height)
 }
 
 export function d2_clear_color_vrgb(color: vec3_t): void {
-    d2.rect(0, 0, d2.canvas.width, d2.canvas.height);
     d2.fillStyle = d2_vrgb_str(color);
-    d2.fill();
+    d2.fillRect(0, 0, d2.canvas.width, d2.canvas.height)
 }
 
 export function d2_move_to(v: vec2_t): void {
@@ -52,9 +50,21 @@ export function d2_line(a: vec2_t, b: vec2_t): void {
     d2.closePath();
 }
 
+export function d2_circle(position: vec2_t, diameter: number): void {
+    d2.beginPath();
+    d2.arc(position[0], position[1], diameter / 2.0, 0.0, 2 * Math.PI);
+    d2.closePath();
+}
+
 export function d2_aabb(min: vec2_t, max: vec2_t): void {
     d2.beginPath();
     d2.rect(min[0], min[1], max[0] - min[0], max[1] - min[1]);
+    d2.closePath();
+}
+
+export function d2_rect(position: vec2_t, size: vec2_t): void {
+    d2.beginPath();
+    d2.rect(position[0] - size[0] / 2.0, position[1] - size[1] / 2.0, size[0], size[1]);
     d2.closePath();
 }
 
