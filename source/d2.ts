@@ -14,7 +14,7 @@ let stroke_color = cl_vec3();
 let line_width = 1.0;
 
 export function d2_rgb_str(r: number, g: number, b: number): string {
-    return `rgb(${b},${g},${b})`;
+    return `rgb(${r},${g},${b})`;
 }
 
 export function d2_rgb_vec_str(v: vec3_t): string {
@@ -270,6 +270,10 @@ export function d2_polygon_cent(points: vec2_t[], x: number, y: number, a: numbe
     d2_draw();
 }
 
+export function d2_polygon_cent2(points: vec2_t[], p: vec2_t, a: number): void {
+    d2_polygon_cent(points, p[0], p[1], a);
+}
+
 export function d2_polygon_cent_angle(point: vec2_t, x: number, y: number, a: number): void {
     const px = point[0], py = point[1];
     const cos = Math.cos(a), sin = Math.sin(a);
@@ -277,6 +281,10 @@ export function d2_polygon_cent_angle(point: vec2_t, x: number, y: number, a: nu
     const y1 = px * sin + py * cos;
 
     d2_line(x, y, x + x1, y + y1);
+}
+
+export function d2_polygon_cent_angle2(point: vec2_t, p: vec2_t, a: number): void {
+    d2_polygon_cent_angle(point, p[0], p[1], a);
 }
 
 export function d2_mouse_pos(x: number, y: number): vec2_t {
