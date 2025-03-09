@@ -1,6 +1,6 @@
 import {vec2_t, vec3_t} from "@cl/type.ts";
 import {cl_vec2} from "@cl/vec2.ts";
-import { cl_vec3 } from "@cl/vec3";
+import {cl_vec3} from "@cl/vec3";
 
 export let d2: CanvasRenderingContext2D;
 
@@ -12,6 +12,10 @@ let draw_mode = 0;
 let fill_color = cl_vec3();
 let stroke_color = cl_vec3();
 let line_width = 1.0;
+let font_size = 16;
+let font_family = "monospace";
+let text_align = "center";
+let text_baseline = "middle";
 
 export function d2_rgb_str(r: number, g: number, b: number): string {
     return `rgb(${r},${g},${b})`;
@@ -192,6 +196,7 @@ export function d2_aabb2(p: vec2_t, s: vec2_t): void {
     d2_aabb(p[0], p[1], s[0], s[1]);
 }
 
+
 export function d2_obb(x: number, y: number, w: number, h: number, a: number): void {
     const transform = d2.getTransform();
 
@@ -217,6 +222,25 @@ export function d2_obb_angle(x: number, y: number, w: number, h: number, a: numb
 export function d2_obb_angle2(p: vec2_t, s: vec2_t, a: number): void {
     d2_obb_angle(p[0], p[1], s[0], s[1], a);
 }
+
+export function d2_obb_minmax(minx: number, miny: number, maxx: number, maxy: number, px: number, py: number, angle: number): void {
+    const x = (minx + maxx) / 2.0;
+    const y = (miny + maxy) / 2.0;
+    const sx = Math.abs(maxx - minx);
+    const sy = Math.abs(maxy - miny);
+
+    d2_obb(x, y, sx, sy, angle);
+}
+
+export function d2_obb_minmax2(min: vec2_t, max: vec2_t, pos: vec2_t, angle: number): void {
+    const x = pos[0] + (min[0] + max[0]) / 2.0;
+    const y = pos[1] + (min[1] + max[1]) / 2.0;
+    const sx = Math.abs(max[0] - min[0]);
+    const sy = Math.abs(max[1] - min[1]);
+
+    d2_obb(x, y, sx, sy, angle);
+}
+
 
 export function d2_polygon(points: vec2_t[]): void {
     if (points.length < 3) {
@@ -298,4 +322,25 @@ export function d2_mouse_pos(x: number, y: number): vec2_t {
     out[1] = scaled_x * matrix.b + scaled_y * matrix.d + matrix.f;
 
     return out;
+}
+
+export function d2_text(x: number, y: number, text: string) {
+    const transform = d2.getTransform();
+
+    d2.scale(1.0, -1.0);
+
+    d2.font = `${font_size}px ${font_family}`;
+    d2.textAlign = text_align as CanvasTextAlign;
+    d2.textBaseline = text_baseline as CanvasTextBaseline;
+
+    if (draw_mode === 0) {
+        d2.fillStyle = d2_rgb_vec_str(fill_color);
+        d2.fillText(text, x, -y);
+    } else {
+        d2.strokeStyle = d2_rgb_vec_str(stroke_color);
+        d2.lineWidth = line_width;
+        d2.strokeText(text, x, -y);
+    }
+
+    d2.setTransform(transform);
 }
