@@ -1,15 +1,15 @@
 import {vec2_t, vec3_t} from "@cl/type.ts";
-import {cl_vec2} from "@cl/vec2.ts";
+import {vec2} from "@cl/vec2.ts";
 
 export const DIRS: vec2_t[] = [
-    cl_vec2(0.0, 1.0),
-    cl_vec2(1.0, 1.0),
-    cl_vec2(1.0, 0.0),
-    cl_vec2(1.0, -1.0),
-    cl_vec2(0.0, -1.0),
-    cl_vec2(-1.0, -1.0),
-    cl_vec2(-1.0, 0.0),
-    cl_vec2(-1.0, 1.0)
+    vec2(0.0, 1.0),
+    vec2(1.0, 1.0),
+    vec2(1.0, 0.0),
+    vec2(1.0, -1.0),
+    vec2(0.0, -1.0),
+    vec2(-1.0, -1.0),
+    vec2(-1.0, 0.0),
+    vec2(-1.0, 1.0)
 ];
 
 export type turmite_table_t = {

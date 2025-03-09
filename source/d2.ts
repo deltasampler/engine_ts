@@ -1,6 +1,6 @@
 import {vec2_t, vec3_t} from "@cl/type.ts";
-import {cl_vec2} from "@cl/vec2.ts";
-import {cl_vec3} from "@cl/vec3";
+import {vec2} from "@cl/vec2.ts";
+import {vec3} from "@cl/vec3";
 
 export let d2: CanvasRenderingContext2D;
 
@@ -9,8 +9,8 @@ export function d2_init(canvas_el: HTMLCanvasElement): CanvasRenderingContext2D 
 }
 
 let draw_mode = 0;
-let fill_color = cl_vec3();
-let stroke_color = cl_vec3();
+let fill_color = vec3();
+let stroke_color = vec3();
 let line_width = 1.0;
 let font_size = 16;
 let font_family = "monospace";
@@ -316,7 +316,7 @@ export function d2_mouse_pos(x: number, y: number): vec2_t {
     const scaled_x = x * d2.canvas.width / rect.width
     const scaled_y = y * d2.canvas.height / rect.height
     const matrix = d2.getTransform().invertSelf()
-    const out = cl_vec2();
+    const out = vec2();
 
     out[0] = scaled_x * matrix.a + scaled_y * matrix.c + matrix.e;
     out[1] = scaled_x * matrix.b + scaled_y * matrix.d + matrix.f;

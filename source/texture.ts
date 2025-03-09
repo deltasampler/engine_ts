@@ -1,6 +1,6 @@
 import {vec3_t} from "@cl/type.ts";
-import {cl_index2} from "@cl/math.ts";
-import { cl_vec3 } from "@cl/vec3";
+import {index2} from "@cl/math.ts";
+import { vec3 } from "@cl/vec3";
 
 export class texture_t {
     width: number;
@@ -18,16 +18,16 @@ export function texture_new(width: number, height: number): texture_t {
 }
 
 export function texture_set_point(texture: texture_t, x: number, y: number, color: vec3_t): void {
-    const index = cl_index2(x, y, texture.width) * 3;
+    const index = index2(x, y, texture.width) * 3;
     texture.data[index] = color[0];
     texture.data[index + 1] = color[1];
     texture.data[index + 2] = color[2];
 }
 
 export function texture_get_point(texture: texture_t, x: number, y: number): vec3_t {
-    const index = cl_index2(x, y, texture.width) * 3;
+    const index = index2(x, y, texture.width) * 3;
 
-    return cl_vec3(
+    return vec3(
         texture.data[index],
         texture.data[index + 1],
         texture.data[index + 2]
