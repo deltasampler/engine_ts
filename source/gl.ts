@@ -29,7 +29,7 @@ export function gl_compile_shader(type: GLenum, source: string): WebGLShader|nul
 
 export function gl_link_program(shaders: {[type: GLenum]: string}): WebGLProgram|null {
     const program = gl.createProgram();
-    const compiled_shaders = [];
+    const compiled_shaders: WebGLShader[] = [];
 
     for (const type in shaders) {
         const source = shaders[type];
