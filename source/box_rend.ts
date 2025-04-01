@@ -169,7 +169,7 @@ export function box_rend_init() {
                     color = mix(vec4(outer_color.xyz, 1.0), inner_color, mask);
 
                 } else if (opt_mask == 1) {
-                    float mask = uv.y > abs(2.0 * fract(uv.x * v_size.x) - 1.0) ? 0.0 : 1.0;
+                    float mask = uv.y > abs(2.0 * fract(uv.x * v_size.x + 0.5) - 1.0) ? 0.0 : 1.0;
                     color = vec4(inner_color.xyz, mask);
                 }
 
