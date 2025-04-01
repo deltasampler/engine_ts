@@ -371,6 +371,7 @@ export function line_rend_build(rdata: line_rdata_t) {
 
 export function line_rend_render(rdata: line_rdata_t, camera: cam2_t): void {
     gl.bindTexture(gl.TEXTURE_2D, tbo);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, rdata.size * px_per_instance, 1, 0, gl.RGBA, gl.FLOAT, rdata.data);
 
     // line pass
     gl.useProgram(line_prog.id);
