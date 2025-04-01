@@ -150,6 +150,7 @@ export function box_rend_init() {
                 int opt_mask = (v_option >> 24) & 0xFF;
                 int opt_border = (v_option >> 16) & 0xFF;
                 int opt_texture = (v_option >> 8) & 0xFF;
+                int opt_selected = v_option & 0xFF;
 
                 vec4 inner_color = unpack256(v_inner_color);
                 vec4 outer_color = unpack256(v_outer_color);
@@ -182,6 +183,10 @@ export function box_rend_init() {
                     float mask = uv_border_width(brick_uv, brick_border_size);
 
                     color = mix(vec4(outer_color.xyz, 1.0), color, mask);
+                }
+
+                if (opt_selected == 1) {
+                    color = vec4(vec3(1.0) - color.xyz, color.w);
                 }
 
                 o_frag_color = color;
