@@ -89,15 +89,16 @@ export function line_rend_init() {
     // line prog
     line_prog.id = gl_link_program({
         [gl.VERTEX_SHADER]: `#version 300 es
+            out vec4 v_color;
             uniform mat4 u_projection;
             uniform mat4 u_view;
             uniform int u_instance_count;
-            uniform sampler2D u_texture;
             uniform int u_cap_type;
             uniform int u_join_type;
-            out vec4 v_color;
+            uniform sampler2D u_texture;
 
-            const int PX_PER_INSTANCE = 2;
+            #define PX_PER_INSTANCE 2
+            #define CAP_TYPE_ARROW 3
 
             vec2 offsets[4] = vec2[](
                 vec2(-0.5, 0.0),
@@ -141,16 +142,16 @@ export function line_rend_init() {
                 vec4 color_next = vec4(unpack256(next1.z), next1.w);
 
                 vec2 dir = normalize(point_next - point_curr);
-                vec2 perp = vec2(-dir.y, dir.x);
+                vec2 perp = vec2(dir.y, -dir.x);
 
                 float dx = offsets[gl_VertexID].x, dy = offsets[gl_VertexID].y;
-                bool is_cap = !(curr1.x == 0.0 && next1.x == 0.0) && (curr1.x == 0.0 || next1.x == 0.0);
-                vec2 offset = (is_cap && u_cap_type == 3) ? dir * width_next * 2.0 * dy : vec2(0.0);
-                vec2 point = mix(point_curr, point_next, dy) - offset;
-                float width = mix(width_curr, width_next, dy);
-                vec4 color = mix(color_curr, color_next, dy);
 
+                bool is_cap = curr1.x == 0.0 || next1.x == 0.0;
+                vec2 arrow_offset = is_cap && u_cap_type == CAP_TYPE_ARROW ? dir * width_next * 2.0 * dy : vec2(0.0);
+                vec2 point = mix(point_curr, point_next - arrow_offset, dy);
+                float width = mix(width_curr, width_next, dy);
                 vec2 position = point + perp * width * dx;
+                vec4 color = mix(color_curr, color_next, dy);
 
                 gl_Position = u_projection * u_view * vec4(position, 0.0, 1.0);
                 v_color = color;
@@ -187,7 +188,14 @@ export function line_rend_init() {
             flat out int v_is_cap;
             flat out int v_is_join;
 
-            const int PX_PER_INSTANCE = 2;
+            #define PX_PER_INSTANCE 2
+            #define CAP_TYPE_SQUARE 1
+            #define CAP_TYPE_TRIANGLE 2
+            #define CAP_TYPE_ARROW 3
+            #define CAP_TYPE_ROUND 4
+            #define JOIN_TYPE_BEVEL 1
+            #define JOIN_TYPE_MITER 2
+            #define JOIN_TYPE_ROUND 3
 
             vec2 offsets[4] = vec2[](
                 vec2(-0.5, 0.0),
@@ -240,97 +248,96 @@ export function line_rend_init() {
                 vec4 color;
                 vec2 tex_coord;
 
+                float dx = offsets[gl_VertexID].x, dy = offsets[gl_VertexID].y;
+
                 // cap or join
                 if (prev1.x == 0.0 || curr1.x == 0.0) {
                     vec2 point_adj = prev1.x == 0.0 ? point_next : point_prev;
                     vec2 dir = normalize(point_curr - point_adj);
-                    vec2 perp = vec2(-dir.y, dir.x);
-                    float dx = offsets[gl_VertexID].x, dy = offsets[gl_VertexID].y;
+                    vec2 perp = vec2(dir.y, -dir.x);
 
-                    if (u_cap_type == 1) {
+                    if (u_cap_type == CAP_TYPE_SQUARE) {
                         vec2 point = mix(point_curr, point_curr + dir * width_curr / 2.0, dy);
 
                         position = point + perp * width_curr * dx;
-                    } else if (u_cap_type == 2) {
+                    } else if (u_cap_type == CAP_TYPE_TRIANGLE) {
                         vec2 point = mix(point_curr, point_curr + dir * width_curr / 2.0, dy);
                         float factor = gl_VertexID < 2 ? 1.0 : 0.0;
 
                         position = point + perp * width_curr * dx * factor;
-                    } else if (u_cap_type == 3 && prev1.x == 1.0) {
+                    } else if (u_cap_type == CAP_TYPE_ARROW && prev1.x == 1.0) {
                         vec2 point = mix(point_curr - dir * width_curr * 2.0, point_curr, dy);
                         float factor = gl_VertexID < 2 ? 1.0 : 0.0;
 
                         position = point + perp * width_curr * dx * factor * 2.0;
-                    } else if (u_cap_type == 4) {
+                    } else if (u_cap_type == CAP_TYPE_ROUND) {
                         vec2 point = mix(point_curr - dir * width_curr / 2.0, point_curr + dir * width_curr / 2.0, dy);
 
                         position = point + perp * width_curr * dx;
                         tex_coord = tex_coords[gl_VertexID];
                     }
 
-                    color = color_curr;
                     v_is_cap = 1;
                 } else {
                     vec2 dir_prev = normalize(point_curr - point_prev);
-                    vec2 perp_prev = vec2(-dir_prev.y, dir_prev.x);
+                    vec2 perp_prev = vec2(dir_prev.y, -dir_prev.x);
                     vec2 dir_curr = normalize(point_next - point_curr);
-                    vec2 perp_curr = vec2(-dir_curr.y, dir_curr.x);
+                    vec2 perp_curr = vec2(dir_curr.y, -dir_curr.x);
                     float width = width_curr / 2.0;
                     float sigma = sign(dot(dir_prev, perp_curr));
                     vec2 point0 = point_curr + perp_prev * width * sigma;
                     vec2 point1 = point_curr + perp_curr * width * sigma;
-                    float dx = offsets[gl_VertexID].x, dy = offsets[gl_VertexID].y;
 
-                    if (u_join_type == 1) {
-                        offsets[0] = point_curr;
-                        offsets[1] = point0;
-                        offsets[2] = point1;
+                    if (u_join_type == JOIN_TYPE_BEVEL) {
+                        offsets[0] = sigma > 0.0 ? point0 : point1;
+                        offsets[1] = sigma > 0.0 ? point1 : point0;
+                        offsets[2] = point_curr;
                         offsets[3] = point_curr;
 
                         position = offsets[gl_VertexID];
-                        color = color_curr;
-                    } else if (u_join_type == 2) {
+                    } else if (u_join_type == JOIN_TYPE_MITER) {
                         vec2 miter_dir = normalize(dir_prev - dir_curr);
                         float miter_length = width / dot(miter_dir, perp_prev);
                         vec2 miter = point_curr + miter_dir * miter_length * sigma;
 
                         offsets[0] = point_curr;
-                        offsets[1] = point0;
-                        offsets[2] = point1;
+                        offsets[1] = sigma > 0.0 ? point0 : point1;
+                        offsets[2] = sigma > 0.0 ? point1 : point0;
                         offsets[3] = miter;
 
                         position = offsets[gl_VertexID];
-                        color = color_curr;
-                    } else if (u_join_type == 3) {
+                    } else if (u_join_type == JOIN_TYPE_ROUND) {
                         vec2 point = mix(point_curr - dir_curr * width, point_curr + dir_curr * width, dy);
                         position = point + perp_curr * width_curr * dx;
 
-                        color = color_curr;
                         tex_coord = tex_coords[gl_VertexID];
                     }
 
-                    color = color_curr;
                     v_is_join = 1;
                 }
 
                 gl_Position = u_projection * u_view * vec4(position, 0.0, 1.0);
-                v_color = color;
+                v_color = color_curr;
                 v_tex_coord = tex_coord;
             }
         `,
         [gl.FRAGMENT_SHADER]: `#version 300 es
             precision highp float;
             out vec4 o_frag_color;
-            in vec2 v_tex_coord;
-            in vec4 v_color;
             flat in int v_is_cap;
             flat in int v_is_join;
+            in vec4 v_color;
+            in vec2 v_tex_coord;
             uniform highp int u_cap_type;
             uniform highp int u_join_type;
             uniform sampler2D u_texture;
 
+            #define CAP_TYPE_ROUND 4
+            #define JOIN_TYPE_ROUND 3
+
             void main() {
-                if (v_is_cap == 1 && u_cap_type == 4 || v_is_join == 1 && u_join_type == 3) {
+                // rounding
+                if (v_is_cap == 1 && u_cap_type == CAP_TYPE_ROUND || v_is_join == 1 && u_join_type == JOIN_TYPE_ROUND) {
                     vec2 uv = v_tex_coord;
                     vec2 cp = uv * 2.0 - 1.0;
 
@@ -365,6 +372,7 @@ export function line_rend_build(rdata: line_rdata_t) {
 export function line_rend_render(rdata: line_rdata_t, camera: cam2_t): void {
     gl.bindTexture(gl.TEXTURE_2D, tbo);
 
+    // line pass
     gl.useProgram(line_prog.id);
     gl.uniformMatrix4fv(line_prog.u_projection, false, camera.projection);
     gl.uniformMatrix4fv(line_prog.u_view, false, camera.view);
@@ -373,6 +381,7 @@ export function line_rend_render(rdata: line_rdata_t, camera: cam2_t): void {
     gl.uniform1i(line_prog.u_join_type, rdata.join_type);
     gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, rdata.size);
 
+    // cap/join pass
     gl.useProgram(capjoin_prog.id);
     gl.uniformMatrix4fv(capjoin_prog.u_projection, false, camera.projection);
     gl.uniformMatrix4fv(capjoin_prog.u_view, false, camera.view);
