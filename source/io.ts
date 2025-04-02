@@ -8,6 +8,7 @@ export type kb_event_t = {
     alt: boolean;
     ctrl: boolean;
     shift: boolean;
+    event: KeyboardEvent;
 };
 
 export type m_event_t = {
@@ -20,11 +21,13 @@ export type m_event_t = {
     ctrl: boolean;
     shift: boolean;
     target: EventTarget|null;
+    event: MouseEvent;
 };
 
 export type m_wheel_event_t = {
     xd: number;
     yd: number;
+    event: WheelEvent;
 };
 
 // internal
@@ -82,7 +85,8 @@ export function io_init(): void {
             code: event.code,
             alt: event.altKey,
             ctrl: event.ctrlKey,
-            shift: event.shiftKey
+            shift: event.shiftKey,
+            event
         });
     });
 
@@ -92,7 +96,8 @@ export function io_init(): void {
             code: event.code,
             alt: event.altKey,
             ctrl: event.ctrlKey,
-            shift: event.shiftKey
+            shift: event.shiftKey,
+            event
         });
     });
 
@@ -106,7 +111,8 @@ export function io_init(): void {
             alt: event.altKey,
             ctrl: event.ctrlKey,
             shift: event.shiftKey,
-            target: event.target
+            target: event.target,
+            event
         });
     });
 
@@ -121,7 +127,8 @@ export function io_init(): void {
             alt: event.altKey,
             ctrl: event.ctrlKey,
             shift: event.shiftKey,
-            target: event.target
+            target: event.target,
+            event
         });
     });
 
@@ -136,14 +143,16 @@ export function io_init(): void {
             alt: event.altKey,
             ctrl: event.ctrlKey,
             shift: event.shiftKey,
-            target: event.target
+            target: event.target,
+            event
         });
     });
 
     addEventListener("wheel", function(event: WheelEvent): void {
         io.m_wheel_scroll({
             xd: Math.sign(event.deltaX),
-            yd: Math.sign(event.deltaY)
+            yd: Math.sign(event.deltaY),
+            event
         });
     });
 }
