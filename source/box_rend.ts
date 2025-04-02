@@ -12,8 +12,9 @@ let vao: WebGLVertexArrayObject;
 let vbo: WebGLBuffer;
 
 const layout = layout_new();
+layout_attrib(layout, ATTRIB_TYPE.F32, 3);
 layout_attrib(layout, ATTRIB_TYPE.F32, 2);
-layout_attrib(layout, ATTRIB_TYPE.F32, 2);
+layout_attrib(layout, ATTRIB_TYPE.F32, 1);
 layout_attrib(layout, ATTRIB_TYPE.S32, 1);
 layout_attrib(layout, ATTRIB_TYPE.S32, 1);
 layout_attrib(layout, ATTRIB_TYPE.S32, 1);
@@ -21,59 +22,62 @@ layout_attrib(layout, ATTRIB_TYPE.F32, 3);
 
 export class box_rdata_t {
     data: ArrayBuffer;
-    size: number;
     len: number;
+    cap: number;
     instances: DataView[];
 };
 
 export function box_rdata_new(): box_rdata_t {
     const rdata = new box_rdata_t();
     rdata.data = new ArrayBuffer(0);
-    rdata.size = 0;
     rdata.len = 0;
+    rdata.cap = 0;
     rdata.instances = [];
 
     return rdata;
 }
 
-export function box_rdata_build(rdata: box_rdata_t, size: number): void {
-    const data = new ArrayBuffer(size * layout.stride);
+export function box_rdata_build(rdata: box_rdata_t, cap: number): void {
+    const data = new ArrayBuffer(cap * layout.stride);
     const instances: DataView[] = [];
 
-    for (let i = 0; i < size; i += 1) {
+    for (let i = 0; i < cap; i += 1) {
         instances.push(new DataView(data, i * layout.stride, layout.stride));
     }
 
     rdata.data = data;
-    rdata.size = size;
-    rdata.len = size;
+    rdata.len = cap;
+    rdata.cap = cap;
     rdata.instances = instances;
 }
 
-export function box_rdata_instance(rdata: box_rdata_t, index: number, position: vec2_t, size: vec2_t, inner_color: vec4_t, outer_color: vec4_t, option: vec4_t, params: vec3_t) {
+export function box_rdata_instance(rdata: box_rdata_t, index: number, position: vec2_t, size: vec2_t, rotation: number, zindex: number, inner_color: vec4_t, outer_color: vec4_t, option: vec4_t, params: vec3_t) {
     const instance = rdata.instances[index];
 
     instance.setFloat32(0, position[0], true);
     instance.setFloat32(4, position[1], true);
-    instance.setFloat32(8, size[0], true);
-    instance.setFloat32(12, size[1], true);
-    instance.setInt32(16, vec4_bitpack256v(inner_color), true);
-    instance.setInt32(20, vec4_bitpack256v(outer_color), true);
-    instance.setInt32(24, vec4_bitpack256v(option), true);
-    instance.setFloat32(28, params[0], true);
-    instance.setFloat32(32, params[1], true);
-    instance.setFloat32(36, params[2], true);
+    instance.setFloat32(8, zindex, true);
+    instance.setFloat32(12, size[0], true);
+    instance.setFloat32(16, size[1], true);
+    instance.setFloat32(20, rotation, true);
+    instance.setInt32(24, vec4_bitpack256v(inner_color), true);
+    instance.setInt32(28, vec4_bitpack256v(outer_color), true);
+    instance.setInt32(32, vec4_bitpack256v(option), true);
+    instance.setFloat32(36, params[0], true);
+    instance.setFloat32(40, params[1], true);
+    instance.setFloat32(44, params[2], true);
 };
 
 export function box_rend_init() {
     program = gl_link_program({
         [gl.VERTEX_SHADER]: `#version 300 es
-            layout(location = 0) in vec2 i_position;
+            layout(location = 0) in vec3 i_position;
             layout(location = 1) in vec2 i_size;
-            layout(location = 2) in int i_inner_color;
-            layout(location = 3) in int i_outer_color;
-            layout(location = 4) in int i_option;
-            layout(location = 5) in vec3 i_params;
+            layout(location = 2) in float i_rotation;
+            layout(location = 3) in int i_inner_color;
+            layout(location = 4) in int i_outer_color;
+            layout(location = 5) in int i_option;
+            layout(location = 6) in vec3 i_params;
             out vec2 v_size;
             out vec2 v_tex_coord;
             flat out int v_inner_color;
@@ -97,10 +101,19 @@ export function box_rend_init() {
                 vec2(1.0, 1.0)
             );
 
-            void main() {
-                vec2 position = positions[gl_VertexID] * i_size + i_position;
+            vec2 rotate(vec2 p, float r) {
+                float c = cos(r), s = sin(r);
 
-                gl_Position = u_projection * u_view * vec4(position, 0.0, 1.0);
+                return vec2(
+                    p.x * c - p.y * s,
+                    p.x * s + p.y * c
+                );
+            }
+
+            void main() {
+                vec2 position = rotate(positions[gl_VertexID] * i_size, i_rotation) + i_position.xy;
+
+                gl_Position = u_projection * u_view * vec4(position, (i_position.z + 100.0) / 200.0 , 1.0);
                 v_size = i_size;
                 v_tex_coord = tex_coords[gl_VertexID];
                 v_inner_color = i_inner_color;
@@ -192,7 +205,7 @@ export function box_rend_init() {
                 }
 
                 if (opt_selected == 1) {
-                    color = vec4(vec3(1.0) - color.xyz, color.w);
+                    color += vec4(0.0, 0.0, 0.3, 0.0);
                 }
 
                 o_frag_color = color;
@@ -216,6 +229,7 @@ export function box_rend_build(rdata: box_rdata_t) {
 }
 
 export function box_rend_render(rdata: box_rdata_t, camera: cam2_t): void {
+    gl.enable(gl.DEPTH_TEST);
     gl.useProgram(program);
     gl.uniformMatrix4fv(u_projection, false, camera.projection);
     gl.uniformMatrix4fv(u_view, false, camera.view);
@@ -223,4 +237,5 @@ export function box_rend_render(rdata: box_rdata_t, camera: cam2_t): void {
     gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, rdata.data);
     gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, rdata.len);
+    gl.disable(gl.DEPTH_TEST);
 }

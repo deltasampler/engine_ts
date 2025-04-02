@@ -1,6 +1,6 @@
 import {vec2_t, vec3_t} from "@cl/type.ts";
 import {vec2} from "@cl/vec2.ts";
-import {vec3} from "@cl/vec3";
+import {vec3} from "@cl/vec3.ts";
 
 export let d2: CanvasRenderingContext2D;
 

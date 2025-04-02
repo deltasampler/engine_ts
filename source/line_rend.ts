@@ -42,7 +42,8 @@ export enum LINE_JOIN_TYPE {
 
 export class line_rdata_t {
     data: Float32Array;
-    size: number;
+    len: number;
+    cap: number;
     instances: Float32Array[];
     cap_type: LINE_CAP_TYPE;
     join_type: LINE_JOIN_TYPE;
@@ -51,7 +52,8 @@ export class line_rdata_t {
 export function line_rdata_new(): line_rdata_t {
     const rdata = new line_rdata_t();
     rdata.data = new Float32Array(0);
-    rdata.size = 0;
+    rdata.len = 0;
+    rdata.cap = 0;
     rdata.instances = [];
     rdata.cap_type = LINE_CAP_TYPE.NONE;
     rdata.join_type = LINE_JOIN_TYPE.NONE;
@@ -59,26 +61,27 @@ export function line_rdata_new(): line_rdata_t {
     return rdata;
 }
 
-export function line_rdata_build(rdata: line_rdata_t, size: number): void {
-    const data = new Float32Array(size * stride);
+export function line_rdata_build(rdata: line_rdata_t, cap: number): void {
+    const data = new Float32Array(cap * stride);
     const instances: Float32Array[] = [];
 
-    for (let i = 0; i < size; i += 1) {
+    for (let i = 0; i < cap; i += 1) {
         instances.push(new Float32Array(data.buffer, i * stride * 4, stride));
     }
 
     rdata.data = data;
-    rdata.size = size;
+    rdata.len = cap;
+    rdata.cap = cap;
     rdata.instances = instances;
 }
 
-export function line_rdata_instance(rdata: line_rdata_t, index: number, point: vec2_t, width: number, forward: number, color: vec4_t) {
+export function line_rdata_instance(rdata: line_rdata_t, index: number, point: vec2_t, width: number, forward: number, zindex: number, color: vec4_t) {
     const instance = rdata.instances[index];
 
     instance[0] = point[0];
     instance[1] = point[1];
-    instance[2] = width;
-    instance[3] = 0.0;
+    instance[2] = zindex;
+    instance[3] = width;
     instance[4] = forward;
     instance[5] = 0;
     instance[6] = vec3_pack256(color[0], color[1], color[2]);
@@ -134,11 +137,11 @@ export function line_rend_init() {
                 vec4 next1 = texelFetch(u_texture, ivec2(next + 1, 0), 0);
 
                 vec2 point_curr = curr0.xy;
-                float width_curr = curr0.z;
+                float width_curr = curr0.w;
                 vec4 color_curr = vec4(unpack256(curr1.z), curr1.w);
 
                 vec2 point_next = next0.xy;
-                float width_next = next0.z;
+                float width_next = next0.w;
                 vec4 color_next = vec4(unpack256(next1.z), next1.w);
 
                 vec2 dir = normalize(point_next - point_curr);
@@ -239,7 +242,7 @@ export function line_rend_init() {
                 vec2 point_prev = prev0.xy;
 
                 vec2 point_curr = curr0.xy;
-                float width_curr = curr0.z;
+                float width_curr = curr0.w;
                 vec4 color_curr = vec4(unpack256(curr1.z), curr1.w);
 
                 vec2 point_next = next0.xy;
@@ -366,28 +369,28 @@ export function line_rend_build(rdata: line_rdata_t) {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, rdata.size * px_per_instance, 1, 0, gl.RGBA, gl.FLOAT, rdata.data);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, rdata.cap * px_per_instance, 1, 0, gl.RGBA, gl.FLOAT, rdata.data);
 }
 
 export function line_rend_render(rdata: line_rdata_t, camera: cam2_t): void {
     gl.bindTexture(gl.TEXTURE_2D, tbo);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, rdata.size * px_per_instance, 1, 0, gl.RGBA, gl.FLOAT, rdata.data);
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, rdata.len * px_per_instance, 1, gl.RGBA, gl.FLOAT, rdata.data)
 
     // line pass
     gl.useProgram(line_prog.id);
     gl.uniformMatrix4fv(line_prog.u_projection, false, camera.projection);
     gl.uniformMatrix4fv(line_prog.u_view, false, camera.view);
-    gl.uniform1i(line_prog.u_instance_count, rdata.size);
+    gl.uniform1i(line_prog.u_instance_count, rdata.cap);
     gl.uniform1i(line_prog.u_cap_type, rdata.cap_type);
     gl.uniform1i(line_prog.u_join_type, rdata.join_type);
-    gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, rdata.size);
+    gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, rdata.cap);
 
     // cap/join pass
     gl.useProgram(capjoin_prog.id);
     gl.uniformMatrix4fv(capjoin_prog.u_projection, false, camera.projection);
     gl.uniformMatrix4fv(capjoin_prog.u_view, false, camera.view);
-    gl.uniform1i(capjoin_prog.u_instance_count, rdata.size);
+    gl.uniform1i(capjoin_prog.u_instance_count, rdata.cap);
     gl.uniform1i(capjoin_prog.u_cap_type, rdata.cap_type);
     gl.uniform1i(capjoin_prog.u_join_type, rdata.join_type);
-    gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, rdata.size);
+    gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, rdata.cap);
 }

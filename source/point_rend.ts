@@ -12,51 +12,55 @@ let vao: WebGLVertexArrayObject;
 let vbo: WebGLBuffer;
 
 const layout = layout_new();
-layout_attrib(layout, ATTRIB_TYPE.F32, 2);
+layout_attrib(layout, ATTRIB_TYPE.F32, 3);
 layout_attrib(layout, ATTRIB_TYPE.F32, 1);
 layout_attrib(layout, ATTRIB_TYPE.S32, 1);
 
 export class point_rdata_t {
     data: ArrayBuffer;
-    size: number;
+    len: number;
+    cap: number;
     instances: DataView[];
 };
 
 export function point_rdata_new(): point_rdata_t {
     const rdata = new point_rdata_t();
     rdata.data = new ArrayBuffer(0);
-    rdata.size = 0;
+    rdata.len = 0;
+    rdata.cap = 0;
     rdata.instances = [];
 
     return rdata;
 }
 
-export function point_rdata_build(rdata: point_rdata_t, size: number): void {
-    const data = new ArrayBuffer(size * layout.stride);
+export function point_rdata_build(rdata: point_rdata_t, cap: number): void {
+    const data = new ArrayBuffer(cap * layout.stride);
     const instances: DataView[] = [];
 
-    for (let i = 0; i < size; i += 1) {
+    for (let i = 0; i < cap; i += 1) {
         instances.push(new DataView(data, i * layout.stride, layout.stride));
     }
 
     rdata.data = data;
-    rdata.size = size;
+    rdata.len = cap;
+    rdata.cap = cap;
     rdata.instances = instances;
 }
 
-export function point_rdata_instance(rdata: point_rdata_t, index: number, position: vec2_t, radius: number, color: vec4_t) {
+export function point_rdata_instance(rdata: point_rdata_t, index: number, position: vec2_t, radius: number, zindex: number, color: vec4_t) {
     const instance = rdata.instances[index];
 
     instance.setFloat32(0, position[0], true);
     instance.setFloat32(4, position[1], true);
-    instance.setFloat32(8, radius, true);
-    instance.setInt32(12, vec4_bitpack256v(color), true);
+    instance.setFloat32(8, zindex, true);
+    instance.setFloat32(12, radius, true);
+    instance.setInt32(16, vec4_bitpack256v(color), true);
 };
 
 export function point_rend_init() {
     program = gl_link_program({
         [gl.VERTEX_SHADER]: `#version 300 es
-            layout(location = 0) in vec2 i_position;
+            layout(location = 0) in vec3 i_position;
             layout(location = 1) in float i_radius;
             layout(location = 2) in int i_color;
             flat out float v_radius;
@@ -80,9 +84,9 @@ export function point_rend_init() {
             );
 
             void main() {
-                vec2 position = positions[gl_VertexID] * i_radius + i_position;
+                vec2 position = positions[gl_VertexID] * i_radius + i_position.xy;
 
-                gl_Position = u_projection * u_view * vec4(position, 0.0, 1.0);
+                gl_Position = u_projection * u_view * vec4(position, i_position.z, 1.0);
                 v_radius = i_radius;
                 v_color = i_color;
                 v_tex_coord = tex_coords[gl_VertexID];
@@ -127,7 +131,7 @@ export function point_rend_build(rdata: point_rdata_t) {
 
     vbo = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(rdata.data), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, rdata.data, gl.STATIC_DRAW);
 
     layout_build_gl(layout, true);
 }
@@ -139,5 +143,5 @@ export function point_rend_render(rdata: point_rdata_t, camera: cam2_t): void {
     gl.bindVertexArray(vao);
     gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, rdata.data);
-    gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, rdata.size);
+    gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, rdata.len);
 }
