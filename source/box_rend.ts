@@ -22,6 +22,7 @@ layout_attrib(layout, ATTRIB_TYPE.F32, 3);
 export class box_rdata_t {
     data: ArrayBuffer;
     size: number;
+    len: number;
     instances: DataView[];
 };
 
@@ -29,6 +30,7 @@ export function box_rdata_new(): box_rdata_t {
     const rdata = new box_rdata_t();
     rdata.data = new ArrayBuffer(0);
     rdata.size = 0;
+    rdata.len = 0;
     rdata.instances = [];
 
     return rdata;
@@ -44,6 +46,7 @@ export function box_rdata_build(rdata: box_rdata_t, size: number): void {
 
     rdata.data = data;
     rdata.size = size;
+    rdata.len = size;
     rdata.instances = instances;
 }
 
@@ -216,5 +219,5 @@ export function box_rend_render(rdata: box_rdata_t, camera: cam2_t): void {
     gl.bindVertexArray(vao);
     gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, rdata.data);
-    gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, rdata.size);
+    gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, rdata.len);
 }
