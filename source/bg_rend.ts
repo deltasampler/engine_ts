@@ -1,22 +1,23 @@
 import {gl, gl_link_program} from "@engine/gl.ts";
 import {cam2_t} from "@cl/cam2.ts";
 import {vec3_t} from "@cl/type.ts";
+import { vec3_clone } from "@cl/vec3";
 
 let program: WebGLProgram;
-let u_top_color: WebGLUniformLocation;
-let u_bottom_color: WebGLUniformLocation;
+let u_lower_color: WebGLUniformLocation;
+let u_upper_color: WebGLUniformLocation;
 let u_position: WebGLUniformLocation;
 let u_time: WebGLUniformLocation;
 
 export class bg_rdata_t {
-    top_color: vec3_t;
-    bottom_color: vec3_t;
+    lower_color: vec3_t;
+    upper_color: vec3_t;
 };
 
-export function bg_rdata_new(top_color: vec3_t, bottom_color: vec3_t): bg_rdata_t {
+export function bg_rdata_new(lower_color: vec3_t, upper_color: vec3_t): bg_rdata_t {
     const background = new bg_rdata_t();
-    background.top_color = top_color;
-    background.bottom_color = bottom_color;
+    background.lower_color = vec3_clone(lower_color);
+    background.upper_color = vec3_clone(upper_color);
 
     return background;
 }
@@ -49,23 +50,23 @@ export function bg_rend_init() {
         [gl.FRAGMENT_SHADER]: `#version 300 es
             precision highp float;
             in vec2 v_tex_coord;
-            uniform vec3 u_top_color;
-            uniform vec3 u_bottom_color;
+            uniform vec3 u_lower_color;
+            uniform vec3 u_upper_color;
             uniform vec2 u_position;
             uniform float u_time;
             out vec4 o_frag_color;
 
             void main() {
                 vec2 uv = v_tex_coord;
-                vec3 color = mix(u_top_color, u_bottom_color, uv.y);
+                vec3 color = mix(u_lower_color, u_upper_color, uv.y);
 
                 o_frag_color = vec4(color, 1.0);
             }
         `
     })!;
 
-    u_top_color = gl.getUniformLocation(program, "u_top_color")!;
-    u_bottom_color = gl.getUniformLocation(program, "u_bottom_color")!;
+    u_lower_color = gl.getUniformLocation(program, "u_lower_color")!;
+    u_upper_color = gl.getUniformLocation(program, "u_upper_color")!;
     u_position = gl.getUniformLocation(program, "u_position")!;
     u_time = gl.getUniformLocation(program, "u_time")!;
 }
@@ -73,8 +74,8 @@ export function bg_rend_init() {
 export function bg_rend_render(bg_rdata: bg_rdata_t, camera: cam2_t, time: number) {
     gl.useProgram(program);
     gl.uniform2fv(u_position, camera.position);
-    gl.uniform3fv(u_top_color, bg_rdata.top_color);
-    gl.uniform3fv(u_bottom_color, bg_rdata.bottom_color);
+    gl.uniform3fv(u_lower_color, bg_rdata.lower_color);
+    gl.uniform3fv(u_upper_color, bg_rdata.upper_color);
     gl.uniform1f(u_time, time);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 }
