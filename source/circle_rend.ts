@@ -126,7 +126,7 @@ export function circle_rend_init() {
                 float l = length(cp);
                 vec4 inner_color = unpack256(v_inner_color);
                 vec4 outer_color = unpack256(v_outer_color);
-                float alias_width = fwidth(l);
+                float alias_width = fwidth(l / v_radius);
                 float inner_mask = smoothstep(1.0 - v_outline / v_radius, 1.0 - alias_width, l);
                 vec4 color = mix(inner_color, outer_color, inner_mask);
                 color.w *= smoothstep(1.0, 1.0 - alias_width, l);
