@@ -1,7 +1,6 @@
 import {gl, gl_link_program} from "@engine/gl.ts";
-import {cam2_t} from "@cl/cam2.ts";
-import {vec3_t} from "@cl/type.ts";
-import { vec3_clone } from "@cl/vec3";
+import {cam2_t} from "@cl/camera/cam2.ts";
+import {vec3_clone, vec3_t} from "@cl/math/vec3.ts";
 
 let program: WebGLProgram;
 let u_lower_color: WebGLUniformLocation;

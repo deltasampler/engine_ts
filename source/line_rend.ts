@@ -1,7 +1,8 @@
-import {cam2_t} from "@cl/cam2.ts";
-import {vec2_t, vec4_t} from "@cl/type.ts";
-import {vec3_pack256} from "@cl/vec3";
+import {cam2_t} from "@cl/camera/cam2.ts";
+import {vec3_pack256} from "@cl/math/vec3";
 import {gl, gl_link_program} from "@engine/gl.ts";
+import {vec2_t} from "@cl/math/vec2.ts";
+import {vec4_t} from "@cl/math/vec4.ts";
 
 const line_prog = {} as {
     id: WebGLProgram,

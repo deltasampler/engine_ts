@@ -1,5 +1,5 @@
-import {vec2_t, vec3_t} from "@cl/type.ts";
-import {vec2} from "@cl/vec2.ts";
+import {vec2, vec2_t} from "@cl/math/vec2.ts";
+import {vec3_t} from "@cl/math/vec3.ts";
 
 export const DIRS: vec2_t[] = [
     vec2(0.0, 1.0),

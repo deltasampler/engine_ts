@@ -1,6 +1,5 @@
-import {vec3_t} from "@cl/type.ts";
-import {index2} from "@cl/math.ts";
-import {vec3} from "@cl/vec3.ts";
+import {index2} from "@cl/math/math.ts";
+import {vec3, vec3_t} from "@cl/math/vec3.ts";
 
 export class texture_t {
     width: number;

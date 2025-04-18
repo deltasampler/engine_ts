@@ -1,6 +1,7 @@
 import {gl, gl_link_program} from "@engine/gl.ts";
-import {cam2_t} from "@cl/cam2.ts";
-import {vec2_t, vec3_t} from "@cl/type.ts";
+import {cam2_t} from "@cl/camera/cam2.ts";
+import {vec2_t} from "@cl/math/vec2.ts";
+import {vec3_t} from "@cl/math/vec3.ts";
 
 let program: WebGLProgram;
 let u_projection: WebGLUniformLocation;
@@ -12,7 +13,7 @@ let u_line_width: WebGLUniformLocation;
 let u_color: WebGLUniformLocation;
 
 export class grid_rdata_t {
-    position: vec2_t ;
+    position: vec2_t;
     size: vec2_t;
     cell_size: vec2_t;
     line_width: number;
