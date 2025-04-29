@@ -1,5 +1,5 @@
 import {cam2_t} from "@cl/camera/cam2.ts";
-import {vec3_pack256} from "@cl/math/vec3";
+import {vec3_pack256} from "@cl/math/vec3_color.ts";
 import {gl, gl_link_program} from "@engine/gl.ts";
 import {vec2_t} from "@cl/math/vec2.ts";
 import {vec4_t} from "@cl/math/vec4.ts";

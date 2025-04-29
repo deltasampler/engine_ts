@@ -1,6 +1,6 @@
 import {gl, gl_link_program} from "@engine/gl.ts";
 import {cam2_t} from "@cl/camera/cam2.ts";
-import {vec3_clone, vec3_t} from "@cl/math/vec3.ts";
+import {vec3n_copy, vec3_t} from "@cl/math/vec3.ts";
 
 let program: WebGLProgram;
 let u_lower_color: WebGLUniformLocation;
@@ -15,8 +15,8 @@ export class bg_rdata_t {
 
 export function bg_rdata_new(lower_color: vec3_t, upper_color: vec3_t): bg_rdata_t {
     const background = new bg_rdata_t();
-    background.lower_color = vec3_clone(lower_color);
-    background.upper_color = vec3_clone(upper_color);
+    background.lower_color = vec3n_copy(lower_color);
+    background.upper_color = vec3n_copy(upper_color);
 
     return background;
 }

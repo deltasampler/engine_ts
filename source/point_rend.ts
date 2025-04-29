@@ -1,5 +1,6 @@
 import {cam2_t} from "@cl/camera/cam2.ts";
-import {vec4_bitpack256v, vec4_t} from "@cl/math/vec4.ts";
+import {vec4_t} from "@cl/math/vec4.ts";
+import {vec4_bitpack256v} from "@cl/math/vec4_color.ts";
 import {gl, gl_link_program} from "@engine/gl.ts";
 import {ATTRIB_TYPE, layout_attrib, layout_build_gl, layout_new} from "@engine/layout.ts";
 import {vec2_t} from "@cl/math/vec2.ts";
