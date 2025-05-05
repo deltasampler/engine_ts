@@ -9,9 +9,6 @@ let program: WebGLProgram;
 let u_projection: WebGLUniformLocation;
 let u_view: WebGLUniformLocation;
 
-let vao: WebGLVertexArrayObject;
-let vbo: WebGLBuffer;
-
 const layout = layout_new();
 layout_attrib(layout, ATTRIB_TYPE.F32, 3);
 layout_attrib(layout, ATTRIB_TYPE.F32, 2);
@@ -25,6 +22,8 @@ export class obb_rdata_t {
     len: number;
     cap: number;
     instances: DataView[];
+    vao: WebGLVertexArrayObject;
+    vbo: WebGLBuffer;
 };
 
 export function obb_rdata_new(): obb_rdata_t {
@@ -33,6 +32,8 @@ export function obb_rdata_new(): obb_rdata_t {
     rdata.len = 0;
     rdata.cap = 0;
     rdata.instances = [];
+    rdata.vao = 0;
+    rdata.vbo = 0;
 
     return rdata;
 }
@@ -161,11 +162,11 @@ export function obb_rend_init() {
 }
 
 export function obb_rend_build(rdata: obb_rdata_t) {
-    vao = gl.createVertexArray();
-    gl.bindVertexArray(vao);
+    rdata.vao = gl.createVertexArray();
+    gl.bindVertexArray(rdata.vao);
 
-    vbo = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+    rdata.vbo = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, rdata.vbo);
     gl.bufferData(gl.ARRAY_BUFFER, rdata.data, gl.STATIC_DRAW);
 
     layout_build_gl(layout, true);
@@ -175,8 +176,8 @@ export function obb_rend_render(rdata: obb_rdata_t, camera: cam2_t): void {
     gl.useProgram(program);
     gl.uniformMatrix4fv(u_projection, false, camera.projection);
     gl.uniformMatrix4fv(u_view, false, camera.view);
-    gl.bindVertexArray(vao);
-    gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+    gl.bindVertexArray(rdata.vao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, rdata.vbo);
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, rdata.data);
     gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, rdata.len);
 }
